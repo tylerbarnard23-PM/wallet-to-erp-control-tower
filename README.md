@@ -2,6 +2,8 @@
 
 > **Enterprise payments demo showing the full lifecycle from customer checkout to ERP journal posting.**
 
+**Live demo:** https://tylerbarnard23-pm.github.io/wallet-to-erp-control-tower/
+
 ---
 
 ## Product Story
