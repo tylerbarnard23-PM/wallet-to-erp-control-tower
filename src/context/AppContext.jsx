@@ -1,12 +1,26 @@
 import { createContext, useContext, useReducer } from 'react';
 
 export const defaultConfig = {
+  // Wallet
   expressWalletFirst: true,
-  requireBillingAddress: false,
-  showTrustMessaging: true,
-  showFeesEarly: false,
+  savedCardEnabled: false,
+  showPaymentIcons: false,
   deviceSimulation: 'mobile',
+  // Trust & social proof
+  showTrustMessaging: true,
+  showReviews: false,
+  showScarcity: false,
+  showMoneyBack: false,
+  // Offer & pricing
+  showFeesEarly: false,
+  showInstallments: false,
+  showSavings: false,
   showPromoCode: true,
+  // Friction & conversion
+  guestCheckoutEnabled: false,
+  autoFillHints: false,
+  // Fraud prevention
+  requireBillingAddress: false,
 };
 
 function configReducer(state, action) {

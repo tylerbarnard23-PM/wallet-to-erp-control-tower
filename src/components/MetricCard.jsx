@@ -1,8 +1,9 @@
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import clsx from 'clsx';
 import { fmt } from '../utils/formatters';
+import InfoTooltip from './InfoTooltip';
 
-export default function MetricCard({ title, value, delta, format = 'pct', icon: Icon, iconColor = 'text-blue-400', subtitle }) {
+export default function MetricCard({ title, value, delta, format = 'pct', icon: Icon, iconColor = 'text-blue-400', subtitle, tooltip }) {
   const formatted = format === 'pct' ? fmt.pct(value)
     : format === 'currency' ? fmt.compact(value)
     : format === 'number' ? fmt.number(value)
@@ -15,7 +16,10 @@ export default function MetricCard({ title, value, delta, format = 'pct', icon: 
   return (
     <div className="card p-5 flex flex-col gap-3">
       <div className="flex items-start justify-between">
-        <div className="text-sm font-medium text-slate-400">{title}</div>
+        <div className="flex items-center gap-1.5">
+          <div className="text-sm font-medium text-slate-400">{title}</div>
+          {tooltip && <InfoTooltip {...tooltip} />}
+        </div>
         {Icon && (
           <div className={clsx('w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800', iconColor)}>
             <Icon size={16} />

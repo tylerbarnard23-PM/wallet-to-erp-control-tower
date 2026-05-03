@@ -77,6 +77,17 @@ export default function Dashboard() {
           format="pct"
           icon={CreditCard}
           subtitle="Orders that completed payment"
+          tooltip={{
+            what: 'Percentage of checkout sessions that ended in a successfully captured payment.',
+            drivers: [
+              'Express Wallet First — reduces tap count, lifts conversions',
+              'Show Trust Messaging — SSL badge increases buyer confidence',
+              'Show Fees Early — fee disclosure can increase abandonment',
+              'Require Billing Address — adds friction, slight drop in completion',
+              'Promo Code visible — sets higher expectations, minor lift',
+            ],
+            note: 'Delta shown vs. baseline config. Green = improvement over default.',
+          }}
         />
         <MetricCard
           title="Wallet Adoption"
@@ -86,6 +97,14 @@ export default function Dashboard() {
           icon={Wallet}
           iconColor="text-purple-400"
           subtitle="Apple Pay + Google Pay share"
+          tooltip={{
+            what: 'Share of captured payments made via a digital wallet (Apple Pay or Google Pay) vs. manual card entry.',
+            drivers: [
+              'Express Wallet First — wallet buttons above the fold see far higher click rates',
+              'Device type — iOS and Android devices have wallet eligibility; desktop does not',
+            ],
+            note: 'Higher wallet share directly reduces fraud risk due to tokenization.',
+          }}
         />
         <MetricCard
           title="Fraud Approval Rate"
@@ -95,6 +114,14 @@ export default function Dashboard() {
           icon={ShieldCheck}
           iconColor="text-emerald-400"
           subtitle="Auto-approved transactions"
+          tooltip={{
+            what: 'Percentage of transactions automatically approved by the fraud engine without requiring manual review.',
+            drivers: [
+              'Wallet adoption — tokenized payments carry lower risk scores (no raw PAN exposed)',
+              'Require Billing Address — AVS match reduces false positives on legitimate orders',
+            ],
+            note: 'A higher rate means fewer transactions stuck in manual review queues.',
+          }}
         />
         <MetricCard
           title="Recon Match Rate"
@@ -104,6 +131,14 @@ export default function Dashboard() {
           icon={Scale}
           iconColor="text-amber-400"
           subtitle="Exact matches this period"
+          tooltip={{
+            what: 'Percentage of transactions where the internal order amount, processor settlement, and bank deposit all agree exactly.',
+            drivers: [
+              'Fraud approval rate — declined or disputed transactions create exceptions',
+              'Fewer chargebacks (driven by wallet tokenization) means fewer recon breaks',
+            ],
+            note: 'Unmatched records land in the Exception Queue and block ERP auto-posting.',
+          }}
         />
       </div>
 
@@ -117,6 +152,14 @@ export default function Dashboard() {
           icon={FileSpreadsheet}
           iconColor="text-indigo-400"
           subtitle="Auto-posted journal entries"
+          tooltip={{
+            what: 'Percentage of transactions whose journal entries were automatically posted to the GL without requiring manual intervention.',
+            drivers: [
+              'Reconciliation match rate — only clean-matched records auto-post',
+              'Exception volume — each unresolved exception blocks its ERP entry',
+            ],
+            note: 'Failed postings delay the month-end close and require analyst time to correct.',
+          }}
         />
         <MetricCard
           title="Manual Hours Saved"
@@ -125,6 +168,14 @@ export default function Dashboard() {
           icon={Clock}
           iconColor="text-sky-400"
           subtitle="Per week vs. no automation"
+          tooltip={{
+            what: 'Estimated analyst hours per week saved by automated reconciliation and ERP posting, compared to a fully manual process.',
+            drivers: [
+              'Capture rate — more successful payments means more volume handled automatically',
+              'Recon match rate — every exception adds ~25 min of analyst investigation time',
+            ],
+            note: 'Assumes 40-person payments ops team; your mileage will vary.',
+          }}
         />
         <MetricCard
           title="Est. Recovered Revenue"
@@ -133,6 +184,14 @@ export default function Dashboard() {
           icon={DollarSign}
           iconColor="text-emerald-400"
           subtitle="Per month from retry & match"
+          tooltip={{
+            what: 'Estimated monthly revenue recovered through improved checkout conversion, automated exception resolution, and chargeback dispute wins.',
+            drivers: [
+              'Capture rate delta — each +1pp captures ~$18K more revenue per month',
+              'Recon match rate delta — each +1pp reduces chargeback losses ~$9.5K/mo',
+            ],
+            note: 'Based on $1.8M average monthly volume. Adjust in metricsService.js.',
+          }}
         />
         <MetricCard
           title="Processing Volume"
@@ -141,6 +200,14 @@ export default function Dashboard() {
           icon={TrendingUp}
           iconColor="text-blue-400"
           subtitle="72-hour gross capture"
+          tooltip={{
+            what: 'Total gross payment volume captured in the current 72-hour rolling window, across all payment methods.',
+            drivers: [
+              'Sum of all captured transaction amounts before processor fees',
+              'Excludes declined, pending-review, and refunded transactions',
+            ],
+            note: 'Static in this demo. In production this updates every 15 minutes.',
+          }}
         />
       </div>
 

@@ -11,22 +11,60 @@ const BASE = {
 export function calculateMetrics(config) {
   let { captureRate, walletAdoption, fraudApprovalRate, reconMatchRate, erpPostingSuccess, manualHoursSaved, recoveredRevenue } = BASE;
 
+  // Wallet
   if (config.expressWalletFirst) {
     captureRate += 0.044;
     walletAdoption += 0.101;
   }
+  if (config.savedCardEnabled) {
+    captureRate += 0.036;  // returning customers convert at much higher rate
+    walletAdoption += 0.022;
+  }
+  if (config.showPaymentIcons) {
+    captureRate += 0.008;  // recognizable brands reduce uncertainty
+  }
+
+  // Trust & social proof
   if (config.showTrustMessaging) {
     captureRate += 0.019;
   }
+  if (config.showReviews) {
+    captureRate += 0.017;  // social proof reduces purchase anxiety
+  }
+  if (config.showScarcity) {
+    captureRate += 0.011;  // urgency nudge lifts conversions
+  }
+  if (config.showMoneyBack) {
+    captureRate += 0.014;  // guarantee removes risk perception
+  }
+
+  // Offer & pricing
   if (config.showFeesEarly) {
     captureRate -= 0.033;
   }
-  if (config.requireBillingAddress) {
-    fraudApprovalRate += 0.011;
-    captureRate -= 0.008;
+  if (config.showInstallments) {
+    captureRate += 0.028;   // BNPL unlocks high-AOV purchases
+    fraudApprovalRate -= 0.005; // installment orders have slightly higher dispute rates
+  }
+  if (config.showSavings) {
+    captureRate += 0.013;  // anchoring on original price increases perceived value
   }
   if (!config.showPromoCode) {
     captureRate -= 0.014;
+  }
+
+  // Friction & conversion
+  if (config.guestCheckoutEnabled) {
+    captureRate += 0.039;  // forced account creation is a top abandonment driver
+  }
+  if (config.autoFillHints) {
+    captureRate += 0.012;  // autofill cuts form completion time significantly
+  }
+
+  // Fraud prevention
+  if (config.requireBillingAddress) {
+    fraudApprovalRate += 0.011;
+    captureRate -= 0.008;
   }
 
   // Higher wallet adoption → lower fraud (tokenization benefit)
