@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "PowerShell(npm install *)"
+      "PowerShell(npm install *)",
+      "PowerShell(\\(Get-ChildItem \"C:\\\\Users\\\\tyler\\\\wallet-to-erp-control-tower\\\\node_modules\" -ErrorAction SilentlyContinue | Measure-Object\\).Count)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(npm *)",
+      "PowerShell(npm run *)"
     ]
   }
 }

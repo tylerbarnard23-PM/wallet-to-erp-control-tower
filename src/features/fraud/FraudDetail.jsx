@@ -78,15 +78,14 @@ function SignalRow({ sig, value }) {
 }
 
 const DECISION_CONFIG = {
-  approved: { icon: CheckCircle2, color: 'emerald', label: 'Approved', bg: 'bg-emerald-500/10 border-emerald-500/25' },
-  review: { icon: AlertCircle, color: 'amber', label: 'Flagged for Review', bg: 'bg-amber-500/10 border-amber-500/25' },
-  declined: { icon: XCircle, color: 'red', label: 'Declined', bg: 'bg-red-500/10 border-red-500/25' },
+  approved: { icon: CheckCircle2, textColor: 'text-emerald-400', label: 'Approved', bg: 'bg-emerald-500/10 border-emerald-500/25' },
+  review: { icon: AlertCircle, textColor: 'text-amber-400', label: 'Flagged for Review', bg: 'bg-amber-500/10 border-amber-500/25' },
+  declined: { icon: XCircle, textColor: 'text-red-400', label: 'Declined', bg: 'bg-red-500/10 border-red-500/25' },
 };
 
 export default function FraudDetail({ transaction: t, onClose }) {
   const dc = DECISION_CONFIG[t.fraudDecision];
   const Icon = dc.icon;
-  const color = dc.color;
 
   return (
     <div className="card h-full overflow-auto">
@@ -141,8 +140,8 @@ export default function FraudDetail({ transaction: t, onClose }) {
         {/* Decision */}
         <div className={`rounded-xl border p-3 ${dc.bg}`}>
           <div className="flex items-center gap-2 mb-1">
-            <Icon size={15} className={`text-${color}-400`} />
-            <span className={`text-sm font-semibold text-${color}-400`}>{dc.label}</span>
+            <Icon size={15} className={dc.textColor} />
+            <span className={`text-sm font-semibold ${dc.textColor}`}>{dc.label}</span>
           </div>
           <div className="text-xs text-slate-400">
             {t.fraudDecision === 'approved' && 'All signals within acceptable thresholds. Transaction processed automatically.'}

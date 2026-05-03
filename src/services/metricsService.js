@@ -79,17 +79,16 @@ export function getVolumeTimeSeries() {
   });
 }
 
+const EXCEPTION_SEEDS = [3,4,2,5,3,4,2,3,4,5,3,2,4,3];
+const MISSING_SEEDS  = [2,1,2,3,1,2,1,2,3,2,1,2,1,2];
+const DUP_SEEDS      = [0,1,0,1,0,0,1,0,1,0,1,0,0,1];
+
 export function getDailyExceptions() {
   const now = new Date('2026-05-03');
   return Array.from({ length: 14 }, (_, i) => {
     const d = new Date(now);
     d.setDate(d.getDate() - (13 - i));
     const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    return {
-      label,
-      mismatch: Math.floor(2 + Math.random() * 4),
-      missing: Math.floor(1 + Math.random() * 3),
-      duplicate: Math.floor(Math.random() * 2),
-    };
+    return { label, mismatch: EXCEPTION_SEEDS[i], missing: MISSING_SEEDS[i], duplicate: DUP_SEEDS[i] };
   });
 }
