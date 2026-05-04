@@ -1,25 +1,77 @@
 import { useState } from 'react';
 import { Lock, Tag, ChevronDown, CreditCard, Shield, Star, Flame, RotateCcw, BadgeCheck } from 'lucide-react';
 
-const ORDER_ITEMS = [
-  { name: 'Business Class — SFO → LHR', qty: 1, price: 2890.00, originalPrice: 3299.00 },
-  { name: 'Travel Insurance Add-on',     qty: 1, price: 89.00,   originalPrice: null },
-];
+// Category-specific copy
+const CATEGORY_COPY = {
+  travel: {
+    reviewText: 'Trusted by 12,400+ travelers',
+    scarcityText: '14 people viewing · 3 seats left at this price',
+    moneyBackText: 'Cancel up to 24h before — full refund',
+    summaryLabel: 'Trip Summary',
+  },
+  electronics: {
+    reviewText: 'Verified by 8,200+ buyers',
+    scarcityText: '6 people viewing · 4 left in stock',
+    moneyBackText: '30-day returns, no questions asked',
+    summaryLabel: 'Order Summary',
+  },
+  fitness: {
+    reviewText: 'Joined by 5,400+ members',
+    scarcityText: 'Limited new member slots this month',
+    moneyBackText: '30-day no-commitment trial period',
+    summaryLabel: 'Membership Summary',
+  },
+  grocery: {
+    reviewText: 'Used by 50,000+ households',
+    scarcityText: 'Low stock on 2 items — order soon',
+    moneyBackText: '100% satisfaction guarantee',
+    summaryLabel: 'Cart Summary',
+  },
+  saas: {
+    reviewText: 'Trusted by 25,000+ teams',
+    scarcityText: 'Pricing increases at end of quarter',
+    moneyBackText: '30-day free cancellation guarantee',
+    summaryLabel: 'Plan Summary',
+  },
+  events: {
+    reviewText: 'Rated 4.9 — 22,000+ ticket sales',
+    scarcityText: 'Only 6 tickets remain at this price!',
+    moneyBackText: 'Full refund if event is cancelled',
+    summaryLabel: 'Ticket Details',
+  },
+  auto: {
+    reviewText: 'Reviewed by 3,100+ verified buyers',
+    scarcityText: 'Only 3 kits remaining at this price',
+    moneyBackText: '30-day fitment guarantee or full return',
+    summaryLabel: 'Parts Summary',
+  },
+  home: {
+    reviewText: 'Trusted by 1,800+ homeowners',
+    scarcityText: 'Contractor schedule fills 2 weeks out',
+    moneyBackText: 'Deposit fully refundable within 48h',
+    summaryLabel: 'Project Summary',
+  },
+};
 
-const subtotal      = ORDER_ITEMS.reduce((s, i) => s + i.price * i.qty, 0);
-const originalTotal = ORDER_ITEMS.reduce((s, i) => s + (i.originalPrice ?? i.price) * i.qty, 0);
-const savings       = originalTotal - subtotal;
-const processingFee = parseFloat((subtotal * 0.029 + 0.30).toFixed(2));
-const total         = subtotal + processingFee;
-const installment   = parseFloat((total / 4).toFixed(2));
+const DEFAULT_COPY = {
+  reviewText: 'Trusted by thousands of customers',
+  scarcityText: '14 people viewing · Limited availability',
+  moneyBackText: '30-day money-back guarantee',
+  summaryLabel: 'Order Summary',
+};
 
-// ─── Payment brand icons (inline SVG, no external logos) ─────────────────────
+const DEFAULT_ITEM = {
+  productName: 'Business Class — SFO → LHR',
+  price: 2890.00,
+  originalPrice: 3299.00,
+  qty: 1,
+  icon: '✈️',
+};
+
 function PaymentIcons() {
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      {/* Visa-style */}
       <div className="h-6 px-2 flex items-center justify-center bg-white rounded text-[10px] font-black tracking-tighter text-blue-800 border border-gray-200">VISA</div>
-      {/* MC-style */}
       <div className="h-6 w-9 flex items-center justify-center rounded border border-gray-200 bg-white overflow-hidden">
         <svg viewBox="0 0 38 24" width="32">
           <circle cx="15" cy="12" r="9" fill="#EB001B" opacity="0.9"/>
@@ -27,9 +79,7 @@ function PaymentIcons() {
           <path d="M19 5.8A8.97 8.97 0 0 1 22.5 12 8.97 8.97 0 0 1 19 18.2 8.97 8.97 0 0 1 15.5 12 8.97 8.97 0 0 1 19 5.8z" fill="#FF5F00"/>
         </svg>
       </div>
-      {/* Amex-style */}
       <div className="h-6 px-1.5 flex items-center justify-center bg-blue-600 rounded text-[9px] font-bold text-white border border-blue-700">AMEX</div>
-      {/* Discover-style */}
       <div className="h-6 px-1.5 flex items-center justify-center bg-white rounded border border-gray-200 text-[9px] font-bold text-slate-700">
         DISC<span className="text-orange-500">●</span>VER
       </div>
@@ -70,21 +120,37 @@ function GooglePayButton({ onClick }) {
 
 const INPUT_BASE = 'w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500';
 
-export default function CheckoutPreview({ config, onPay }) {
-  const [promoOpen, setPromoOpen]   = useState(false);
-  const [promoCode, setPromoCode]   = useState('');
-  const [cardNum, setCardNum]       = useState('');
-  const [expiry, setExpiry]         = useState('');
-  const [cvv, setCvv]               = useState('');
-  const [name, setName]             = useState('');
-  const [useGuest, setUseGuest]     = useState(true);
+export default function CheckoutPreview({ config, onPay, cartItems, selectedProduct }) {
+  const [promoOpen, setPromoOpen] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [cardNum, setCardNum]     = useState('');
+  const [expiry, setExpiry]       = useState('');
+  const [cvv, setCvv]             = useState('');
+  const [name, setName]           = useState('');
+  const [useGuest, setUseGuest]   = useState(true);
+
+  // Resolve items: use cartItems if provided, else fall back to selectedProduct or default
+  const items = (cartItems && cartItems.length > 0)
+    ? cartItems
+    : selectedProduct
+      ? [{ ...selectedProduct, qty: 1 }]
+      : [DEFAULT_ITEM];
+
+  const subtotal      = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const originalTotal = items.reduce((s, i) => s + ((i.originalPrice ?? i.price) * i.qty), 0);
+  const savings       = originalTotal - subtotal;
+  const processingFee = parseFloat((subtotal * 0.029 + 0.30).toFixed(2));
+  const total         = subtotal + processingFee;
+  const installment   = parseFloat((total / 4).toFixed(2));
 
   const isMobile = config.deviceSimulation === 'mobile' || config.deviceSimulation === 'android';
   const displayTotal = config.showFeesEarly ? total : subtotal;
 
+  const cat = selectedProduct?.category;
+  const copy = CATEGORY_COPY[cat] ?? DEFAULT_COPY;
+
   return (
     <div className="card overflow-hidden">
-      {/* Preview header */}
       <div className="card-header flex items-center justify-between">
         <div className="text-sm font-semibold text-slate-200">Checkout Preview</div>
         <div className="flex items-center gap-2">
@@ -98,23 +164,21 @@ export default function CheckoutPreview({ config, onPay }) {
         </div>
       </div>
 
-      {/* Social proof banner */}
       {config.showReviews && (
         <div className="px-5 pt-4 pb-0 flex items-center gap-2">
           <div className="flex items-center gap-0.5">
             {[1,2,3,4,5].map((s) => <Star key={s} size={12} className="fill-amber-400 text-amber-400" />)}
           </div>
           <span className="text-xs text-slate-300 font-medium">4.8</span>
-          <span className="text-xs text-slate-500">· Trusted by 12,400+ travelers</span>
+          <span className="text-xs text-slate-500">· {copy.reviewText}</span>
         </div>
       )}
 
       <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} divide-y lg:divide-y-0 lg:divide-x divide-slate-800`}>
 
-        {/* ── Payment column ─────────────────────────────────────── */}
+        {/* ── Payment column ─── */}
         <div className={`${isMobile ? 'w-full' : 'flex-1'} p-5 space-y-4`}>
 
-          {/* Payment header */}
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-slate-100">Payment</h2>
             {config.showTrustMessaging && (
@@ -125,7 +189,6 @@ export default function CheckoutPreview({ config, onPay }) {
             )}
           </div>
 
-          {/* Guest / account toggle */}
           {config.guestCheckoutEnabled && (
             <div className="flex rounded-lg overflow-hidden border border-slate-700 text-xs font-medium">
               <button
@@ -143,7 +206,6 @@ export default function CheckoutPreview({ config, onPay }) {
             </div>
           )}
 
-          {/* Saved card (returning customer) */}
           {config.savedCardEnabled && (
             <div className="space-y-2">
               <div className="text-xs font-medium text-slate-400">Your saved payment method</div>
@@ -158,7 +220,9 @@ export default function CheckoutPreview({ config, onPay }) {
                     <div className="text-xs text-slate-500">Expires 09/28</div>
                   </div>
                 </div>
-                <span className="text-xs font-semibold text-blue-400">Pay ${displayTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                <span className="text-xs font-semibold text-blue-400">
+                  Pay ${displayTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </span>
               </button>
               <div className="flex items-center gap-3 text-xs text-slate-500">
                 <div className="flex-1 h-px bg-slate-700" />
@@ -168,7 +232,6 @@ export default function CheckoutPreview({ config, onPay }) {
             </div>
           )}
 
-          {/* Express wallet buttons */}
           {config.expressWalletFirst && (
             <div className="space-y-2">
               <ApplePayButton onClick={onPay} />
@@ -181,7 +244,6 @@ export default function CheckoutPreview({ config, onPay }) {
             </div>
           )}
 
-          {/* Autofill hint */}
           {config.autoFillHints && (
             <div className="flex items-center gap-2 text-xs text-blue-400/80 bg-blue-500/8 border border-blue-500/15 rounded-lg px-3 py-2">
               <RotateCcw size={11} />
@@ -189,7 +251,6 @@ export default function CheckoutPreview({ config, onPay }) {
             </div>
           )}
 
-          {/* Card form */}
           <div className="space-y-3">
             <input
               type="text"
@@ -250,7 +311,6 @@ export default function CheckoutPreview({ config, onPay }) {
             )}
           </div>
 
-          {/* Non-express wallet */}
           {!config.expressWalletFirst && (
             <div className="space-y-2 pt-1">
               <div className="flex items-center gap-3 text-xs text-slate-500">
@@ -263,7 +323,6 @@ export default function CheckoutPreview({ config, onPay }) {
             </div>
           )}
 
-          {/* Primary CTA */}
           <button
             onClick={() => onPay('Card')}
             className="w-full btn-primary py-3 text-base font-semibold"
@@ -271,7 +330,6 @@ export default function CheckoutPreview({ config, onPay }) {
             Pay ${displayTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </button>
 
-          {/* Installments */}
           {config.showInstallments && (
             <div className="text-center text-xs text-slate-400">
               or{' '}
@@ -282,7 +340,6 @@ export default function CheckoutPreview({ config, onPay }) {
             </div>
           )}
 
-          {/* Trust row */}
           <div className="flex items-center justify-center gap-4 flex-wrap text-xs text-slate-500">
             {config.showTrustMessaging && (
               <>
@@ -295,7 +352,7 @@ export default function CheckoutPreview({ config, onPay }) {
             {config.showMoneyBack && (
               <span className="flex items-center gap-1 text-emerald-500/80">
                 <BadgeCheck size={11} />
-                30-day money-back guarantee
+                {copy.moneyBackText}
               </span>
             )}
             {!config.showTrustMessaging && !config.showMoneyBack && (
@@ -303,7 +360,6 @@ export default function CheckoutPreview({ config, onPay }) {
             )}
           </div>
 
-          {/* Payment icons */}
           {config.showPaymentIcons && (
             <div className="flex justify-center">
               <PaymentIcons />
@@ -311,29 +367,31 @@ export default function CheckoutPreview({ config, onPay }) {
           )}
         </div>
 
-        {/* ── Order summary column ────────────────────────────────── */}
+        {/* ── Order summary column ─── */}
         <div className={`${isMobile ? 'w-full' : 'w-72'} p-5 bg-slate-900/50 space-y-4`}>
-          <div className="text-sm font-semibold text-slate-200">Order Summary</div>
+          <div className="text-sm font-semibold text-slate-200">{copy.summaryLabel}</div>
 
-          {/* Scarcity */}
           {config.showScarcity && (
             <div className="flex items-center gap-2 text-xs bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
               <Flame size={12} className="text-red-400 flex-shrink-0" />
-              <span className="text-red-300">
-                <span className="font-semibold">14 people</span> are viewing · <span className="font-semibold">3 seats</span> left at this price
-              </span>
+              <span className="text-red-300">{copy.scarcityText}</span>
             </div>
           )}
 
-          {/* Line items */}
           <div className="space-y-3">
-            {ORDER_ITEMS.map((item) => (
-              <div key={item.name} className="flex justify-between gap-3">
-                <div className="text-xs text-slate-400 leading-relaxed">{item.name}</div>
+            {items.map((item) => (
+              <div key={item.id ?? item.productName} className="flex justify-between gap-3">
+                <div className="flex items-start gap-2">
+                  {item.icon && <span className="text-base leading-tight mt-0.5">{item.icon}</span>}
+                  <div className="text-xs text-slate-400 leading-relaxed">
+                    {item.productName}
+                    {item.qty > 1 && <span className="text-slate-500"> × {item.qty}</span>}
+                  </div>
+                </div>
                 <div className="text-right flex-shrink-0">
                   {config.showSavings && item.originalPrice && (
                     <div className="text-xs text-slate-600 line-through">
-                      ${item.originalPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      ${(item.originalPrice * item.qty).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </div>
                   )}
                   <div className="text-xs text-slate-200 font-medium">
@@ -344,8 +402,7 @@ export default function CheckoutPreview({ config, onPay }) {
             ))}
           </div>
 
-          {/* Savings callout */}
-          {config.showSavings && (
+          {config.showSavings && savings > 0 && (
             <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2 text-xs">
               <span className="text-emerald-400 font-medium">You save</span>
               <span className="text-emerald-400 font-bold">
@@ -354,7 +411,6 @@ export default function CheckoutPreview({ config, onPay }) {
             </div>
           )}
 
-          {/* Totals */}
           <div className="pt-3 border-t border-slate-800 space-y-2 text-xs">
             <div className="flex justify-between text-slate-400">
               <span>Subtotal</span>
@@ -372,7 +428,6 @@ export default function CheckoutPreview({ config, onPay }) {
             </div>
           </div>
 
-          {/* Promo code */}
           {config.showPromoCode && (
             <div>
               <button

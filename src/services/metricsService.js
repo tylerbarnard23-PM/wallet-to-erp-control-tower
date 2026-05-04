@@ -8,46 +8,120 @@ const BASE = {
   recoveredRevenue: 712000,
 };
 
-export function calculateMetrics(config) {
+// Per-category multipliers on individual config toggle effects.
+// Values > 1 amplify a toggle's impact; < 1 dampen it.
+const CATEGORY_MODIFIERS = {
+  travel: {
+    expressWalletFirst: 1.4,
+    showScarcity: 1.5,
+    showMoneyBack: 1.3,
+    showInstallments: 0.8,
+    showFeesEarly: 1.4,
+    guestCheckoutEnabled: 1.2,
+  },
+  electronics: {
+    showInstallments: 1.5,
+    showReviews: 1.4,
+    requireBillingAddress: 1.3,
+    showSavings: 1.2,
+    showMoneyBack: 1.2,
+    expressWalletFirst: 0.9,
+  },
+  fitness: {
+    showSavings: 1.4,
+    showInstallments: 1.3,
+    showMoneyBack: 1.3,
+    showScarcity: 0.4,
+    expressWalletFirst: 0.7,
+  },
+  grocery: {
+    savedCardEnabled: 1.8,
+    autoFillHints: 1.6,
+    expressWalletFirst: 1.2,
+    showScarcity: 0.3,
+    showInstallments: 0.2,
+    showTrustMessaging: 0.5,
+    showMoneyBack: 0.5,
+  },
+  saas: {
+    showSavings: 1.5,
+    showMoneyBack: 1.4,
+    showTrustMessaging: 1.2,
+    showFeesEarly: 1.2,
+    guestCheckoutEnabled: 0.5,
+    showScarcity: 0.3,
+  },
+  events: {
+    expressWalletFirst: 1.5,
+    showScarcity: 1.8,
+    requireBillingAddress: 1.4,
+    savedCardEnabled: 1.3,
+    showInstallments: 0.6,
+    showMoneyBack: 0.4,
+  },
+  auto: {
+    showReviews: 1.6,
+    showMoneyBack: 1.5,
+    showSavings: 1.3,
+    showScarcity: 0.4,
+    showInstallments: 0.8,
+    expressWalletFirst: 0.7,
+  },
+  home: {
+    showTrustMessaging: 1.5,
+    showReviews: 1.7,
+    showMoneyBack: 1.6,
+    requireBillingAddress: 1.3,
+    expressWalletFirst: 0.5,
+    showScarcity: 0.3,
+  },
+};
+
+function mod(category, key) {
+  if (!category || !CATEGORY_MODIFIERS[category]) return 1.0;
+  return CATEGORY_MODIFIERS[category][key] ?? 1.0;
+}
+
+export function calculateMetrics(config, category) {
   let { captureRate, walletAdoption, fraudApprovalRate, reconMatchRate, erpPostingSuccess, manualHoursSaved, recoveredRevenue } = BASE;
 
   // Wallet
   if (config.expressWalletFirst) {
-    captureRate += 0.044;
-    walletAdoption += 0.101;
+    captureRate += 0.044 * mod(category, 'expressWalletFirst');
+    walletAdoption += 0.101 * mod(category, 'expressWalletFirst');
   }
   if (config.savedCardEnabled) {
-    captureRate += 0.036;  // returning customers convert at much higher rate
-    walletAdoption += 0.022;
+    captureRate += 0.036 * mod(category, 'savedCardEnabled');
+    walletAdoption += 0.022 * mod(category, 'savedCardEnabled');
   }
   if (config.showPaymentIcons) {
-    captureRate += 0.008;  // recognizable brands reduce uncertainty
+    captureRate += 0.008 * mod(category, 'showPaymentIcons');
   }
 
   // Trust & social proof
   if (config.showTrustMessaging) {
-    captureRate += 0.019;
+    captureRate += 0.019 * mod(category, 'showTrustMessaging');
   }
   if (config.showReviews) {
-    captureRate += 0.017;  // social proof reduces purchase anxiety
+    captureRate += 0.017 * mod(category, 'showReviews');
   }
   if (config.showScarcity) {
-    captureRate += 0.011;  // urgency nudge lifts conversions
+    captureRate += 0.011 * mod(category, 'showScarcity');
   }
   if (config.showMoneyBack) {
-    captureRate += 0.014;  // guarantee removes risk perception
+    captureRate += 0.014 * mod(category, 'showMoneyBack');
   }
 
   // Offer & pricing
   if (config.showFeesEarly) {
-    captureRate -= 0.033;
+    captureRate -= 0.033 * mod(category, 'showFeesEarly');
   }
   if (config.showInstallments) {
-    captureRate += 0.028;   // BNPL unlocks high-AOV purchases
-    fraudApprovalRate -= 0.005; // installment orders have slightly higher dispute rates
+    captureRate += 0.028 * mod(category, 'showInstallments');
+    fraudApprovalRate -= 0.005 * mod(category, 'showInstallments');
   }
   if (config.showSavings) {
-    captureRate += 0.013;  // anchoring on original price increases perceived value
+    captureRate += 0.013 * mod(category, 'showSavings');
   }
   if (!config.showPromoCode) {
     captureRate -= 0.014;
@@ -55,27 +129,25 @@ export function calculateMetrics(config) {
 
   // Friction & conversion
   if (config.guestCheckoutEnabled) {
-    captureRate += 0.039;  // forced account creation is a top abandonment driver
+    captureRate += 0.039 * mod(category, 'guestCheckoutEnabled');
   }
   if (config.autoFillHints) {
-    captureRate += 0.012;  // autofill cuts form completion time significantly
+    captureRate += 0.012 * mod(category, 'autoFillHints');
   }
 
   // Fraud prevention
   if (config.requireBillingAddress) {
-    fraudApprovalRate += 0.011;
+    fraudApprovalRate += 0.011 * mod(category, 'requireBillingAddress');
     captureRate -= 0.008;
   }
 
-  // Higher wallet adoption → lower fraud (tokenization benefit)
+  // Cascading effects
   const walletDelta = walletAdoption - BASE.walletAdoption;
   fraudApprovalRate += walletDelta * 0.09;
 
-  // Fraud rate affects reconciliation (fewer chargebacks)
   const fraudDelta = fraudApprovalRate - BASE.fraudApprovalRate;
   reconMatchRate += fraudDelta * 0.28;
 
-  // Recon affects ERP posting success
   const reconDelta = reconMatchRate - BASE.reconMatchRate;
   erpPostingSuccess += reconDelta * 0.22;
 
@@ -93,7 +165,6 @@ export function calculateMetrics(config) {
     erpPostingSuccess: clamp(erpPostingSuccess),
     manualHoursSaved,
     recoveredRevenue,
-    // deltas vs baseline
     deltas: {
       captureRate: captureRate - BASE.captureRate,
       walletAdoption: walletAdoption - BASE.walletAdoption,
@@ -101,6 +172,16 @@ export function calculateMetrics(config) {
       reconMatchRate: reconMatchRate - BASE.reconMatchRate,
       erpPostingSuccess: erpPostingSuccess - BASE.erpPostingSuccess,
     },
+  };
+}
+
+export function getMetricsExplanation(config, product) {
+  if (!product) {
+    return { topDrivers: [], topTradeoffs: [] };
+  }
+  return {
+    topDrivers: product.categoryInsights?.topDrivers ?? [],
+    topTradeoffs: product.categoryInsights?.topTradeoffs ?? [],
   };
 }
 

@@ -50,8 +50,8 @@ const ExceptionTooltip = ({ active, payload, label }) => {
 };
 
 export default function Dashboard() {
-  const { config } = useAppContext();
-  const m = calculateMetrics(config);
+  const { config, selectedProduct } = useAppContext();
+  const m = calculateMetrics(config, selectedProduct?.category);
   const volumeData = getVolumeTimeSeries();
   const exceptionData = getDailyExceptions();
 

@@ -74,9 +74,10 @@ const ChartTooltip = ({ active, payload, label }) => {
 };
 
 export default function Analytics() {
-  const { config } = useAppContext();
-  const current = calculateMetrics(config);
-  const baseline = calculateMetrics(defaultConfig);
+  const { config, selectedProduct } = useAppContext();
+  const category = selectedProduct?.category;
+  const current = calculateMetrics(config, category);
+  const baseline = calculateMetrics(defaultConfig, category);
   const funnel = buildFunnel(config);
   const trends = buildTrends(config);
   const volumeData = getVolumeTimeSeries().slice(-14);

@@ -2,7 +2,8 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import Layout from './components/Layout';
 import Dashboard from './features/dashboard/Dashboard';
-import CheckoutLab from './features/checkout/CheckoutLab';
+import TrainingStudio from './features/checkout/TrainingStudio';
+import Storefront from './features/storefront/Storefront';
 import FraudLayer from './features/fraud/FraudLayer';
 import ReconciliationWorkbench from './features/reconciliation/ReconciliationWorkbench';
 import ExceptionDetail from './features/exceptions/ExceptionDetail';
@@ -17,7 +18,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
-            <Route path="checkout" element={<CheckoutLab />} />
+            <Route path="storefront" element={<Storefront />} />
+            <Route path="checkout" element={<TrainingStudio />} />
             <Route path="fraud" element={<FraudLayer />} />
             <Route path="reconciliation" element={<ReconciliationWorkbench />} />
             <Route path="exceptions" element={<ExceptionsList />} />

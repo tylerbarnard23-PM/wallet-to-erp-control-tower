@@ -1,13 +1,14 @@
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, ShoppingCart, ShieldAlert, Scale,
-  AlertOctagon, FileSpreadsheet, TrendingUp, Zap,
+  LayoutDashboard, GraduationCap, ShieldAlert, Scale,
+  AlertOctagon, FileSpreadsheet, TrendingUp, Zap, ShoppingBag,
 } from 'lucide-react';
 import clsx from 'clsx';
 
 const NAV = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/checkout', icon: ShoppingCart, label: 'Checkout Lab' },
+  { to: '/storefront', icon: ShoppingBag, label: 'Storefront' },
+  { to: '/checkout', icon: GraduationCap, label: 'Training Studio' },
   { to: '/fraud', icon: ShieldAlert, label: 'Fraud Layer' },
   { to: '/reconciliation', icon: Scale, label: 'Reconciliation' },
   { to: '/exceptions', icon: AlertOctagon, label: 'Exceptions' },
@@ -17,7 +18,7 @@ const NAV = [
 
 export default function Sidebar() {
   return (
-    <aside className="w-60 flex-shrink-0 flex flex-col bg-slate-900 border-r border-slate-800 min-h-screen">
+    <aside className="hidden md:flex w-60 flex-shrink-0 flex-col bg-slate-900 border-r border-slate-800 min-h-screen">
       <div className="px-5 py-5 border-b border-slate-800">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
